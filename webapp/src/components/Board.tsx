@@ -3,11 +3,29 @@ import { Hexagon } from './Hexagon';
 
 type CellState = 'empty' | 'human' | 'bot';
 
-interface BoardProps {
-  botId: string;
-}
+type Coordinates = {
+    x : number;
+    y : number;
+    z : number;
+};
 
-export const Board: React.FC<BoardProps> = ({ botId }) => {
+type GameStatus = {
+    Ongoing: PlayerId | undefined;
+    Finished: PlayerId | undefined;
+};
+
+type PlayerId = {
+    winner: number;
+};
+
+type MoveResponse = {
+    api_version: string;
+    bot_id: string;
+    coords: Coordinates;
+    status: GameStatus;
+};
+
+export const Board: React.FC = () => {
   const size = 30; 
   const boardSize = 5; 
   
@@ -17,10 +35,16 @@ export const Board: React.FC<BoardProps> = ({ botId }) => {
   const startY = 50;
 
   const [boardState, setBoardState] = useState<Record<string, CellState>>({});
-  const [isThinking, setIsThinking] = useState(false);
+  const [isBotThinking, setIsBotThinking] = useState(false);
   const [winner, setWinner] = useState<CellState | null>(null);
 
-  // Genera el YEN basado en el tablero ACTUAL (antes de tu clic)
+  const handleWinner = (status: GameStatus): void => {
+      if (status.Finished !== undefined) {
+          const winner = status.Finished.winner == 0 ? "human" : "bot";
+          setWinner(winner);
+      }
+  };
+
   const generarYEN = (currentBoard: Record<string, CellState>): object => {
     const filas: string[] = [];
     for (let r = 0; r < boardSize; r++) {
@@ -37,65 +61,52 @@ export const Board: React.FC<BoardProps> = ({ botId }) => {
       }
       filas.push(filaString);
     }
-    return { size: boardSize, turn: 0, players: ["B", "R"], layout: filas.join("/") };
+    return { size: boardSize, turn: 1, players: ["B", "R"], layout: filas.join("/") };
   };
 
-  const handleHexClick = async (x: number, y: number, z: number) => {
-    const id = `${x}-${y}-${z}`;
-    
-    // Si la casilla está ocupada, alguien ya ha ganado, o el servidor está pensando, ignoramos el clic
-    if (boardState[id] || isThinking || winner) return;
-
-    // 1. Pintamos tu ficha azul inmediatamente para que la interfaz sea rápida
-    const newBoard = { ...boardState, [id]: 'human' as CellState };
-    setBoardState(newBoard);
-    setIsThinking(true);
-
+  const askBotForMove = async (currentBoard: Record<string, CellState>) => {
+    setIsBotThinking(true);
     try {
       const GAMEY_URL = import.meta.env.VITE_GAMEY_URL ?? 'http://localhost:4000';
-      
-      // 2. Preparamos el paquete EXACTO que espera nuestro nuevo endpoint de Rust
-      const payload = {
-        yen: generarYEN(boardState), // Enviamos cómo estaba el tablero ANTES de tu clic
-        action: "Place",             // Le decimos a Rust que queremos colocar una ficha
-        player: 0,                   // El jugador 0 (B) es el humano, el jugador 1 (R) es el bot. Esto es importante para que Rust sepa quién hizo la jugada.
-        coords: { x, y, z }          // Le decimos a Rust DÓNDE la hemos colocado
-      };
+      const yenPayload = generarYEN(currentBoard); 
 
-      // 3. Llamamos al nuevo endpoint /play
-      const res = await fetch(`${GAMEY_URL}/v1/ybot/play/${botId}`, {
+      const res = await fetch(`${GAMEY_URL}/v1/ybot/choose/random_bot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(yenPayload)
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const data : MoveResponse = await res.json();
+          // Comprobamos si hay ganador
+          handleWinner(data.status);
         
-        // 4. Actualizamos el tablero con el movimiento del bot (si lo hubo)
-        if (data.bot_moved) {
-          const botId = `${data.bot_moved.x}-${data.bot_moved.y}-${data.bot_moved.z}`;
-          newBoard[botId] = 'bot' as CellState;
-          setBoardState({ ...newBoard });
-        }
+        if (data.coords && data.coords.x !== undefined) {
+          const botMoveId = `${data.coords.x}-${data.coords.y}-${data.coords.z}`;
+          
+          const newBoard = { ...currentBoard, [botMoveId]: 'bot' as CellState };
+          setBoardState(newBoard);
 
-        // 5. El servidor nos dice si el juego ha terminado gracias a su algoritmo Union-Find
-        if (data.status === 'Finished') {
-          // Si gana el 0 (B), eres tú. Si gana el 1 (R), es el bot.
-          setWinner(data.winner === 0 ? 'human' : 'bot');
+        } else {
+          console.log("El bot no tiene movimientos disponibles (o hay un empate).");
         }
-
-      } else {
-        console.error("El servidor rechazó la jugada:", await res.text());
-        // Si el servidor falla, quitamos tu ficha azul porque la jugada fue inválida
-        setBoardState(boardState); 
       }
     } catch (error) {
-      console.error("Error al contactar con el servidor:", error);
-      setBoardState(boardState);
+      console.error("Error al contactar con el bot:", error);
     } finally {
-      setIsThinking(false);
+      setIsBotThinking(false);
     }
+  };
+
+  const handleHexClick = (x: number, y: number, z: number) => {
+    const id = `${x}-${y}-${z}`;
+    
+    if (boardState[id] || isBotThinking || winner) return;
+
+    const newBoard: Record<string, CellState> = { ...boardState, [id]: 'human' as CellState };
+    setBoardState(newBoard);
+
+    askBotForMove(newBoard);
   };
 
   const resetGame = () => {
@@ -127,17 +138,18 @@ export const Board: React.FC<BoardProps> = ({ botId }) => {
     return hexElements;
   };
 
+  // Mensajes de la interfaz superior
   let statusMessage = 'Tu turno (Juegas con Azul)';
   let statusColor = '#3b82f6';
 
   if (winner === 'human') {
     statusMessage = '🎉 ¡HAS GANADO LA PARTIDA! 🎉';
-    statusColor = '#22c55e';
+    statusColor = '#22c55e'; // Verde
   } else if (winner === 'bot') {
     statusMessage = '💀 El Bot te ha ganado...';
-    statusColor = '#ef4444';
-  } else if (isThinking) {
-    statusMessage = '🤖 El servidor está procesando...';
+    statusColor = '#ef4444'; // Rojo
+  } else if (isBotThinking) {
+    statusMessage = '🤖 El bot está pensando...';
     statusColor = '#ef4444';
   }
 
