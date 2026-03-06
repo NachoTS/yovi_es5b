@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
+import {app} from '../users-service.js'
+import { Usuario, sequelize } from '../models/index.js'
 
 // Sustituimos el módulo de modelos por completo antes de importar la app
 vi.mock('../models/index.js', () => ({
     Usuario: {
         findOne: vi.fn(),
+        findAll: vi.fn(),
         create: vi.fn()
     },
     // Mockeamos sequelize para que no intente conectar a una DB real al arrancar
@@ -14,10 +17,6 @@ vi.mock('../models/index.js', () => ({
     }
 }))
 
-// Importamos la app y el modelo mockeado
-import app from '../users-service.js'
-import { Usuario } from '../models/index.js'
-
 describe('Pruebas de Inicio de Sesión', () => {
 
     beforeEach(() => {
@@ -26,20 +25,22 @@ describe('Pruebas de Inicio de Sesión', () => {
     })
 
     it('debería iniciar sesión con éxito si las credenciales son correctas', async () => {
-        // Simulamos un usuario en BD con el hash correcto para "password123"
+        // Simulamos un usuario en BD con el hash correcto 
         const usuarioMock = {
             id_usuario: 1,
             nombre: "Test User",
             nom_usuario: "testuser",
-            contrasena: "123$70617373776f7264313233" 
+            contrasena: "cf3bb5beba6c60a05e697521c59aa5303805e07da980e4807ae25fd92a8458ad$7e38627095a070b8df3d0af12b9857aa6a56a350e6eba7bf867a95800d25fc58" 
         }
 
         // Configuramos el mock para que devuelva este usuario
-        Usuario.findOne.mockResolvedValue(usuarioMock)
+        vi.mocked(Usuario.findOne).mockReturnValue(usuarioMock);
+
+
 
         const res = await request(app)
             .post('/login')
-            .send({ nom_usuario: "testuser", contrasena: "password123" })
+            .send({ nom_usuario: "testuser", contrasena: "ADMSIS123$" })
 
         // Verificamos que el login es exitoso
         expect(res.status).toBe(200)
@@ -74,8 +75,8 @@ describe('Pruebas de Inicio de Sesión', () => {
             .post('/login')
             .send({ nom_usuario: "nadie", contrasena: "password123" })
 
-        // Comprobamos que el validador detiene el proceso (400)
         expect(res.status).toBe(400)
+        expect(res.body.error).toBe("Ocurrió un error al iniciar sesión.")
     })
 
     it('debería fallar si la contraseña es incorrecta', async () => {
@@ -89,8 +90,8 @@ describe('Pruebas de Inicio de Sesión', () => {
             .post('/login')
             .send({ nom_usuario: "testuser", contrasena: "passwordErronea" })
 
-        //Salta error (400)   
+        //Salta error (400)
         expect(res.status).toBe(400)
-        expect(res.body.error).toBeDefined()
+        expect(res.body.error).toBe("Error al iniciar sesión. Credenciales no válidas.")
     })
 })

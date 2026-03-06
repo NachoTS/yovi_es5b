@@ -1,10 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import {app} from '../users-service.js'
+import { Usuario, sequelize } from '../models/index.js'
 import request from 'supertest'
 
 // Sustituimos el módulo de modelos por completo antes de importar la app
 vi.mock('../models/index.js', () => ({
     Usuario: {
         findOne: vi.fn(),
+        findAll: vi.fn(),
+        create: vi.fn()
+    },
+    // Mockeamos sequelize para que no intente conectar a una DB real al arrancar
+    sequelize: {
+        authenticate: vi.fn().mockResolvedValue(0),
+        sync: vi.fn().mockResolvedValue(0)
+    }
+}))
+vi.mock('../models/index.js', () => ({
+    Usuario: {
+        findOne: vi.fn(),
+        findAll: vi.fn(),
         create: vi.fn()
     },
     // Mockeamos sequelize para que no intente conectar a una DB real al arrancar
@@ -15,11 +30,9 @@ vi.mock('../models/index.js', () => ({
 }))
 
 // Importamos la app y el modelo mockeado
-import app from '../users-service.js'
-import { Usuario } from '../models/index.js'
 
 describe('Pruebas unitarias de registro', () => {
-    
+
     beforeEach(() => {
         // Limpiamos el historial de llamadas de las funciones mockeadas
         vi.clearAllMocks()
@@ -71,7 +84,7 @@ describe('Pruebas unitarias de registro', () => {
         const res = await request(app)
             .post('/register')
             .send({ nombre: "Nombre Valido", nom_usuario: "user123", contrasena: "123" })
-        
+
         // Comprobamos que el validador detiene el proceso (400)
         expect(res.status).toBe(400)
         expect(res.body.contrasena).toBe("La contraseña debe tener al menos 8 caracteres.")
