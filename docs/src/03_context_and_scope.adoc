@@ -34,6 +34,8 @@ El *sistema YOVI* proporciona al jugador información sobre el estado del juego 
 
 El actor externo principal del sistema es el *jugador*, que puede registrarse y participar en partidas.
 
+Además, existe el actor de *bot externo*, el cual se conectra con el API de la aplicación para jugar y para obtener información de personajes y partidas.
+
 === Contexto técnico
 
 [plantuml]
