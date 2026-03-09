@@ -24,12 +24,11 @@ endif::arc42help[]
 
 Los requisitos principales del sistema son:
 
-- Proporcionar una versión usable y funcional del juego Y.
-- Disponible en la web y accesible desde navegadores principales.
-- Ofrecer diferentes estrategias para jugar con distintos niveles de dificultad.
-- Permitir que los usuarios se registren en el sistema con credenciales seguras.
-- Permitir que los usuarios consulten su histórico de partidas.
-- Ofrecer la opción de jugar contra un bot mediante una API documentada.
+- Ofrecer una versión clásica del juego Y en la web, donde los usuarios podran registrarse y jugar partidas contra la máquina.
+- Se podrá jugar con distintas estrategias y con varios modos de dificultad. Se necesitan al menos dos estrategias distintas; los jugadores eligirán contra qué estrategias y dificultades jugar.
+- Los usuarios podrán registrarse en el sistema. Una vez registrados, las partidas que jueguen serán almacenadas en un histórico de partidas (número de juegos realizados, ratio de victorias, etc.) que podrán ser consultado desde su cuenta.
+- La aplicación ofrecerá una API que permitirá a los bots obtener información relacionada con los usuarios del sistema usuarios y el histórico de partidas. Se deberá documentar correctamente este API.
+- La aplicación ofrecerá un API que permitirá a los bots jugar contra la aplicación, utilizando un método *play* que especificará su posición del tablero en notación YEN mediante un parámetro *position*. Opcionalmente, también se especificará el ID del bot contra el que jugar mediante un parámetro *bot_id*.
 
 === Objetivos de calidad
 
