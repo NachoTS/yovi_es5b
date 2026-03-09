@@ -25,7 +25,11 @@ type MoveResponse = {
     status: GameStatus;
 };
 
-export const Board: React.FC = () => {
+type BoardProps = {
+  difficulty: 'easy' | 'medium';
+};
+
+export const Board: React.FC<BoardProps> = ({ difficulty }) => {
   const size = 30; 
   const boardSize = 5; 
   
@@ -64,39 +68,49 @@ export const Board: React.FC = () => {
     return { size: boardSize, turn: 1, players: ["B", "R"], layout: filas.join("/") };
   };
 
-  const askBotForMove = async (currentBoard: Record<string, CellState>) => {
-    setIsBotThinking(true);
-    try {
-      const GAMEY_URL = import.meta.env.VITE_GAMEY_URL ?? 'http://localhost:4000';
-      const yenPayload = generarYEN(currentBoard); 
+  // Diccionario de bots
+const BOT_ENDPOINTS: Record<string, string> = {
+  easy: 'random_bot',
+  medium: 'piramid_bot',
+  // hard: 'attack_bot' 
+};
 
-      const res = await fetch(`${GAMEY_URL}/v1/ybot/choose/random_bot`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(yenPayload)
-      });
+const askBotForMove = async (currentBoard: Record<string, CellState>) => {
+  setIsBotThinking(true);
+  try {
+    const GAMEY_URL = import.meta.env.VITE_GAMEY_URL ?? 'http://localhost:4000';
+    const yenPayload = generarYEN(currentBoard);
+    
+    const botEndpoint = BOT_ENDPOINTS[difficulty]; 
 
-      if (res.ok) {
-        const data : MoveResponse = await res.json();
-          // Comprobamos si hay ganador
-          handleWinner(data.status);
-        
-        if (data.coords && data.coords.x !== undefined) {
-          const botMoveId = `${data.coords.x}-${data.coords.y}-${data.coords.z}`;
-          
-          const newBoard = { ...currentBoard, [botMoveId]: 'bot' as CellState };
-          setBoardState(newBoard);
+    const res = await fetch(`${GAMEY_URL}/v1/ybot/choose/${botEndpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(yenPayload)
+    });
 
-        } else {
-          console.log("El bot no tiene movimientos disponibles (o hay un empate).");
-        }
+    if (res.ok) {
+      const data: MoveResponse = await res.json();
+      handleWinner(data.status);
+      
+      if (data.coords && data.coords.x !== undefined) {
+        const botMoveId = `${data.coords.x}-${data.coords.y}-${data.coords.z}`;
+        setBoardState({ ...currentBoard, [botMoveId]: 'bot' as CellState });
+      } else {
+        console.warn("El bot devolvió una respuesta válida pero sin coordenadas.");
       }
-    } catch (error) {
-      console.error("Error al contactar con el bot:", error);
-    } finally {
-      setIsBotThinking(false);
+    } else {
+      // AQUÍ evitamos el fallo silencioso
+      const errorText = await res.text();
+      console.error(`Error del servidor (${res.status}):`, errorText);
+      alert(`Error en el servidor al pedir movimiento al bot: ${botEndpoint}. Revisa la consola.`);
     }
-  };
+  } catch (error) {
+    console.error("Error de red al contactar con el bot:", error);
+  } finally {
+    setIsBotThinking(false);
+  }
+};
 
   const handleHexClick = (x: number, y: number, z: number) => {
     const id = `${x}-${y}-${z}`;
