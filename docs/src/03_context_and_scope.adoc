@@ -14,10 +14,19 @@ El sistema se presenta como una caja negra, mostrando únicamente sus relaciones
 left to right direction
 skinparam rectangleStyle rounded
 title YOVI - Diagrama de contexto de negocio
+
 actor Jugador
-rectangle "Sistema YOVI"
-Jugador --> "Sistema YOVI" : Se registra y juega
-"Sistema YOVI" --> Jugador : Muestra estado del juego y estadísticas
+rectangle "Sistema YOVI" as system
+actor Bot
+
+' === Enlaces ocultos para forzar la posición central ===
+Jugador -[hidden]right- system
+system -[hidden]right- Bot
+
+Jugador --> system : Se registra y juega
+system --> Jugador : Muestra estado del juego y estadísticas
+Bot --> system : Juega mediante la API
+system --> Bot: Provee info. de partidas y jugadores
 @enduml
 ----
 
