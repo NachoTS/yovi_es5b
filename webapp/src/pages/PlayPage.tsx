@@ -39,7 +39,7 @@ const PlayPage: React.FC = () => {
       
       {/* Cabecera de la partida */}
       <div style={{ width: '100%', maxWidth: '800px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '20px' }}>
-        <h2>Partida de: <strong>{username}</strong></h2>
+        <h2>Partida de: <strong>{user.nombre}</strong></h2>
         
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button 

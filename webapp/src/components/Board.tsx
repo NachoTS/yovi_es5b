@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Hexagon } from './Hexagon';
+
+type BoardProps = {
+    botId: string;
+};
 
 type CellState = 'empty' | 'human' | 'bot';
 
