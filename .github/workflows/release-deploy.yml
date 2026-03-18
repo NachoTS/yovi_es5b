@@ -120,7 +120,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
           workdir: users
-          buildargs: DB_NAME=${{ secrets.DEPLOY_DB_NAME }},DB_USER=${{ secrets.DEPLOY_DB_USER }},DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }},DB_HOST=${{ secrets.DEPLOY_HOST }}
+          buildargs: DB_NAME=${{ secrets.DEPLOY_DB_NAME }},DB_USER=${{ secrets.DEPLOY_DB_USER }},DB_PASSWORD=${{ secrets.DEPLOY_DB_PASSWORD }},DB_HOST=host.docker.internal
 
   docker-push-webapp:
     name: Publish webapp image
@@ -166,7 +166,7 @@ jobs:
   deploy:
     name: Deploy over SSH
     runs-on: ubuntu-latest
-    needs: [docker-push-users, docker-push-webapp, docker-push-gamey]
+    needs: [docker-push-users, docker-push-webapp, docker-push-gamey, docker-push-database]
     steps:
       - name: Deploy over SSH
         uses: fifsky/ssh-action@master
