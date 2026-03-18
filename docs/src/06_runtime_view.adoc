@@ -74,6 +74,7 @@ Una vez que el usuario ha iniciado sesión, puede comenzar una partida de juego.
 actor Usuario
 participant Webapp as "Webapp"
 participant GameY as "GameY Engine"
+participant Users as "Users"
 database db as "DataBase"
 
 Usuario -> Webapp: Escoge modo de juego
@@ -91,7 +92,8 @@ Webapp -> Usuario: Mostrar resultados
 
 opt Si se quieren registrar los resultados
 Usuario -> Webapp: Guardar puntuación
-Webapp -> db: Registrar resultados
+Webapp -> Users: Enviar resultados
+Users -> db: Insertar puntuación
 
 end
 @enduml

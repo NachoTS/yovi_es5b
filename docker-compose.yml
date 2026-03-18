@@ -1,12 +1,16 @@
 services:
 
   database:
+
+    build:
+      context: ./database
+      args:
+      # Valores para desarrollo; en producción se utilizan otros
+        - MYSQL_DATABASE=yovi-es5b-dev
+        - MYSQL_ROOT_PASSWORD=ADMSIS123$
     container_name: yovi-database
-    image: mysql:8.0
+    image: ghcr.io/arquisoft/yovi_es5b-database:latest
     restart: always
-    environment:
-      - MYSQL_DATABASE=yovi-es5b-dev
-      - MYSQL_ROOT_PASSWORD=ADMSIS123$
     ports:
       - "3306:3306"
     networks:
@@ -25,7 +29,8 @@ services:
       - DB_NAME=yovi-es5b-dev
       - DB_USER=root
       - DB_PASSWORD=ADMSIS123$
-      - DB_HOST=database
+
+      - DB_HOST=host.docker.internal
     depends_on:
       - database
     networks:
