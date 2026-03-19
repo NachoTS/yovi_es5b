@@ -73,7 +73,7 @@ export const Board = ({botId, difficulty}: BoardProps) => {
   // Diccionario de bots
 const BOT_ENDPOINTS: Record<string, string> = {
   easy: 'random_bot',
-  medium: 'piramid_bot',
+  medium: 'mediumbot',
   // hard: 'attack_bot' 
 };
 
