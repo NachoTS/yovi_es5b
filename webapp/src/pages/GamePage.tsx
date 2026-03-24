@@ -20,7 +20,7 @@ const GamePage: React.FC = () => {
       try {
         //Enviamos los datos al puerto 4000 donde corre el microservicio de juego.
         const GAMEY_URL = import.meta.env.VITE_GAMEY_URL ?? 'http://localhost:4000';
-        const res = await fetch(`${GAMEY_URL}/status`);
+        const res = await fetch(`${GAMEY_URL}/status`, {});
         const data = await res.text();
         setGameyStatus(res.ok && data.trim() === 'OK' ? 'ok' : 'error'); //Cambia el gameyStatus en función de la conexión
       } catch (err) {
@@ -45,6 +45,10 @@ const GamePage: React.FC = () => {
       navigate(`${ROUTES.PLAY_PATH(username)}?bot=${strategy}&size=${size}`);
     }
   };
+
+  if (playGame) {
+      return <PlayPage botId={botId} user={user} onBackToLobby={handleBackToLobby}/>;
+  }
 
   return (
     <div className="lobby-container">

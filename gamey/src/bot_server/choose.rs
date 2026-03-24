@@ -75,15 +75,18 @@ pub async fn choose(
             )));
         }
     };
+
     let coords = match bot.choose_move(&game_y) {
         Some(coords) => coords,
         None => {
-            // Handle the case where the bot has no valid moves
-            return Err(Json(ErrorResponse::error(
-                "No valid moves available for the bot",
-                Some(params.api_version),
-                Some(params.bot_id),
-            )));
+            // El tablero está lleno: devolvemos el status actual del juego sin mover
+            let response = MoveResponse {
+                api_version: params.api_version,
+                bot_id: params.bot_id,
+                coords: Coordinates::new(0, 0, 0), // coords vacías, el frontend debe ignorarlas
+                status: game_y.status().clone(),
+            };
+            return Ok(Json(response));
         }
     };
 
