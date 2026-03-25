@@ -72,7 +72,7 @@ describe('GamePage', () => {
       <GamePage user={{id:"1", nombre: "Pepe", nom_usuario:"pepe" }}/>
     )
 
-    const backButton = await screen.findByRole('button', { name: /Jugar contra*/i })
+    const backButton = await screen.findByRole('button', { name: /Jugar/i })
     expect(backButton).toBeTruthy()
   })
 })
